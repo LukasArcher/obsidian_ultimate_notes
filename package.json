@@ -1,0 +1,25 @@
+{
+  "name": "pagebound-notes",
+  "version": "1.0.0",
+  "description": "PDF pages alongside editable Markdown notes in Obsidian",
+  "main": "dist/main.js",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "node --test",
+    "build": "node build.mjs"
+  },
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "pdfjs-dist": "6.5.438"
+  },
+  "devDependencies": {
+    "@codemirror/commands": "6.8.1",
+    "@codemirror/language": "6.11.2",
+    "@codemirror/state": "6.5.0",
+    "@codemirror/view": "6.38.6",
+    "esbuild": "0.28.2",
+    "obsidian": "1.12.3",
+    "typescript": "5.9.3"
+  }
+}
