@@ -1,6 +1,6 @@
 {
   "name": "pagebound-notes",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "PDF pages alongside editable Markdown notes in Obsidian",
   "main": "dist/main.js",
   "scripts": {

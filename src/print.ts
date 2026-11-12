@@ -5,11 +5,7 @@ import { openPdf } from "./pdf";
 async function renderPages(app: App, component: Component, source: string, path: string, body: HTMLElement) {
   const blocks = sections(source);
   function append<K extends keyof HTMLElementTagNameMap>(parent: HTMLElement, tag: K, className = "", text = "") {
-    const element = body.ownerDocument.createElement(tag);
-    element.className = className;
-    element.textContent = text;
-    parent.appendChild(element);
-    return element;
+    return parent.createEl(tag, {cls: className, text});
   }
   let position = 0;
   const markdown = (text: string, element: HTMLElement) => MarkdownRenderer.render(app, text, element, path, component);
@@ -34,7 +30,7 @@ async function renderPages(app: App, component: Component, source: string, path:
             const original = await doc.getPage(page);
             const natural = original.getViewport({scale: 1});
             const viewport = original.getViewport({scale: 1500 / Math.max(natural.width, natural.height)});
-            const canvas = body.ownerDocument.createElement("canvas");
+            const canvas = body.doc.createDocumentFragment().createEl("canvas");
             canvas.width = Math.ceil(viewport.width);
             canvas.height = Math.ceil(viewport.height);
             await original.render({canvas, viewport}).promise;
@@ -96,11 +92,9 @@ export async function renderPageNotes(app: App, element: HTMLElement, context: M
     }
     markdown = source.slice(block.from, block.to);
   }
-  const output = element.ownerDocument.createElement("div");
-  output.className = "pbn-document";
+  const output = element.createDiv("pbn-document");
   const lifecycle = new MarkdownRenderChild(output);
   const title = printing && element.firstElementChild?.tagName === "H1" ? element.firstElementChild : null;
-  element.appendChild(output);
   context.addChild(lifecycle);
   try {
     await renderPages(app, lifecycle, markdown, context.sourcePath, output);

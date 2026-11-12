@@ -1,7 +1,7 @@
 {
   "id": "pagebound-notes",
   "name": "Pagebound Notes",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "minAppVersion": "1.12.7",
   "description": "Read PDF pages alongside editable, page-linked Markdown notes.",
   "author": "LukasArcher",

@@ -38,9 +38,8 @@ export function pdfPage(doc: Awaited<ReturnType<typeof openPdf>["promise"]>, num
   let pagePromise: ReturnType<typeof doc.getPage> | undefined;
   let displayed: {element: HTMLElement; width: number} | undefined;
   const resizeSurface = (width: number, height: number) => {
-    surface.style.width = width + "px";
-    surface.style.height = height + "px";
-    if (displayed) displayed.element.style.transform = "scale(" + width / displayed.width + ")";
+    surface.setCssStyles({width: width + "px", height: height + "px"});
+    if (displayed) displayed.element.setCssStyles({transform: "scale(" + width / displayed.width + ")"});
   };
   const stop = () => {
     generation++;
@@ -60,22 +59,20 @@ export function pdfPage(doc: Awaited<ReturnType<typeof openPdf>["promise"]>, num
       if (token !== generation) return;
       const natural = page.getViewport({scale:1});
       aspect = natural.width / natural.height;
-      frame.style.setProperty("--pbn-aspect", natural.width+" / "+natural.height);
+      frame.setCssProps({"--pbn-aspect": natural.width + " / " + natural.height});
       if (!frame.clientWidth) return;
       const viewport = page.getViewport({scale:frame.clientWidth/natural.width*scale});
       const width = viewport.width;
       const height = viewport.height;
       resizeSurface(width, height);
-      const next = surface.ownerDocument.createElement("div");
-      next.className = "pbn-page-image";
-      next.style.width = width + "px";
-      next.style.height = height + "px";
-      next.style.setProperty("--scale-factor", String(viewport.scale));
-      next.style.setProperty("--total-scale-factor", String(viewport.scale*page.userUnit));
-      next.style.setProperty("--user-unit", String(page.userUnit));
-      next.style.setProperty("--scale-round-x", "1px");
-      next.style.setProperty("--scale-round-y", "1px");
-      const pixelRatio = Math.min(window.devicePixelRatio, 4096/Math.max(width,height), Math.sqrt(8_000_000/(width*height)));
+      const next = surface.doc.createDocumentFragment().createDiv("pbn-page-image");
+      next.setCssStyles({width: width + "px", height: height + "px"});
+      next.setCssProps({
+        "--scale-factor": String(viewport.scale),
+        "--total-scale-factor": String(viewport.scale * page.userUnit),
+        "--user-unit": String(page.userUnit),
+      });
+      const pixelRatio = Math.min(frame.win.devicePixelRatio, 4096/Math.max(width,height), Math.sqrt(8_000_000/(width*height)));
       const canvas = next.createEl("canvas");
       canvas.width = Math.max(1,Math.floor(width*pixelRatio));
       canvas.height = Math.max(1,Math.floor(height*pixelRatio));
@@ -110,8 +107,8 @@ export function pdfPage(doc: Awaited<ReturnType<typeof openPdf>["promise"]>, num
     frame.scrollLeft = left;
     frame.scrollTop = top;
     stop();
-    cancelAnimationFrame(zoomFrame);
-    zoomFrame = requestAnimationFrame(() => void render());
+    frame.win.cancelAnimationFrame(zoomFrame);
+    zoomFrame = frame.win.requestAnimationFrame(() => void render());
   };
   frame.addEventListener("wheel", event => {
     const lineSize = 16;
@@ -190,5 +187,5 @@ export function pdfPage(doc: Awaited<ReturnType<typeof openPdf>["promise"]>, num
     void render();
   });
   resize.observe(frame);
-  return () => {cancelAnimationFrame(zoomFrame);intersection.disconnect();resize.disconnect();stop();};
+  return () => {frame.win.cancelAnimationFrame(zoomFrame);intersection.disconnect();resize.disconnect();stop();};
 }

@@ -20,8 +20,7 @@ class PdfWidget extends WidgetType {
     return this.path===other.path && this.section===other.section;
   }
   toDOM(view:EditorView) {
-    const root = view.dom.ownerDocument.createElement("div");
-    root.className = "pbn";
+    const root = view.dom.doc.createDocumentFragment().createDiv("pbn");
     PdfWidget.mounted.set(root,new PdfLayout(this.app,view,root,this.section,this.path));
     return root;
   }
@@ -91,7 +90,7 @@ class PdfLayout extends Component {
     try {
       if (!file) throw new Error("PDF not found");
       const pdf=openPdf(this.app,file,this.root.ownerDocument);
-      this.disposePdf.push(pdf.close);
+      this.disposePdf.push(() => pdf.close());
       const doc=await pdf.promise;
       if (this.revision!==revision) return;
       count=doc.numPages;
@@ -117,10 +116,10 @@ class PdfLayout extends Component {
   }
   private lanes(row:HTMLElement,page:number) {
     const first=row.createDiv("pbn-lane");
-    this.note(first,page,1);
-    this.note(this.section.columns===3?row.createDiv("pbn-lane"):first,page,2);
+    const primary = this.note(first,page,1);
+    this.note(this.section.columns===3?row.createDiv("pbn-lane"):first,page,2, primary);
   }
-  private note(parent:HTMLElement,page:number,lane:number) {
+  private note(parent:HTMLElement,page:number,lane:number,primary?:HTMLElement) {
     const key=page+":"+lane;
     const cell=parent.createDiv("pbn-note");
     const input=cell.createEl("textarea",{attr:{"aria-label":"Page "+page+", notes "+lane,rows:"3"}});
@@ -133,6 +132,7 @@ class PdfLayout extends Component {
     const refresh=()=>{
       const text=this.section.cells.get(key)?.text ?? "";
       cell.hidden = lane===2 && this.section.columns===2 && !this.section.cells.has(key);
+      primary?.classList.toggle("pbn-fill-lane", cell.hidden);
       if (editing) {
         if (!composing && input.value!==text) {
           const position=input.selectionStart;
@@ -191,7 +191,10 @@ class PdfLayout extends Component {
         event.stopPropagation();
         (event.shiftKey||event.key.toLowerCase()==="y"?redo:undo)(this.view);
       }
-      if (event.key==="Escape") edit.hidden=false,edit.focus();
+      if (event.key === "Escape") {
+        edit.hidden = false;
+        edit.focus();
+      }
     });
     input.addEventListener("blur",()=>{
       editing=false;
@@ -202,6 +205,7 @@ class PdfLayout extends Component {
     });
     this.cells.set(key,{refresh});
     refresh();
+    return cell;
   }
 }
 

@@ -1,5 +1,6 @@
 .pbn { margin: 1em 0; }
-.pbn [hidden] { display: none !important; }
+.pbn .pbn-lane > .pbn-note[hidden],
+.pbn .pbn-note > [hidden] { display: none; }
 .pbn-body { overflow-x: auto; margin-top: .75em; }
 .pbn-row {
   display: grid;
@@ -49,18 +50,18 @@
   font-size: calc(var(--text-scale-factor) * var(--font-height, 0));
   transform: rotate(var(--rotate, 0deg)) scaleX(var(--scale-x, 1)) scale(calc(1 / var(--min-font-size)));
 }
-.pbn .textLayer .markedContent { display: contents; }
+.pbn .textLayer .markedContent { position: static; }
 .pbn .textLayer ::selection { background: rgb(36 116 223 / 35%); }
 
 .pbn .pbn-grab, .pbn .pbn-grab .textLayer :is(span, br) { cursor: grab; }
 .pbn .pbn-dragging, .pbn .pbn-dragging .textLayer :is(span, br) { cursor: grabbing; }
 .pbn .pbn-pan-hint { font-size: var(--font-ui-smaller); margin-inline: 4px; }
 
-.pbn-page-image { position: absolute; inset: 0 auto auto 0; transform-origin: top left; }
+.pbn-page-image { --scale-round-x: 1px; --scale-round-y: 1px; position: absolute; inset: 0 auto auto 0; transform-origin: top left; }
 
 .pbn-lane { align-self: stretch; display: flex; flex-direction: column; }
 .pbn-lane > .pbn-note:last-of-type,
-.pbn-body[data-columns="2"] .pbn-lane > .pbn-note:has(+ .pbn-note[hidden]) { flex: 1; }
+.pbn-lane > .pbn-note.pbn-fill-lane { flex: 1; }
 .pbn-note { cursor: text; }
 
 
@@ -72,6 +73,6 @@
 .pbn-document .notes { overflow-wrap: anywhere; }
 .pbn-document .notes > :first-child { margin-top: 0; }
 @media print {
-  .pbn-document .page { break-inside: avoid; }
+  .pbn-document .page { page-break-inside: avoid; }
   .pbn-document img { max-height: 165mm; object-fit: contain; }
 }

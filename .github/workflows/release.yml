@@ -1,0 +1,40 @@
+name: Release
+on:
+  push:
+    tags: ['[0-9]+.[0-9]+.[0-9]+']
+
+permissions: {}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: npm
+      - name: Check release version
+        run: |
+          node -e 'const tag = process.env.GITHUB_REF_NAME; for (const file of ["manifest.json", "package.json"]) if (require("./" + file).version !== tag) throw Error(file + " does not match release tag " + tag)'
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm run build
+      - name: Attest release assets
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: |
+            dist/main.js
+            dist/manifest.json
+            dist/styles.css
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/main.js dist/manifest.json dist/styles.css --verify-tag --generate-notes
