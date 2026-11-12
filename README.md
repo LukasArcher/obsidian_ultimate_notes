@@ -23,3 +23,7 @@ PDF files are read from the local vault. Pagebound Notes uses no accounts, netwo
 Use Node.js 24. Run `npm ci`, `npm run check`, `npm test`, and `npm run build`. Build output is in `dist/`.
 
 The project is MIT-licensed. Bundled PDF.js code is available under Apache-2.0. The bundle preserves upstream license notices.
+
+## Export slides and notes
+
+In Live Preview, run **Pagebound Notes: Print or save PDF notes** and choose **Save as PDF** or **Microsoft Print to PDF** in the print dialog. The export includes the full slides and their corresponding notes.

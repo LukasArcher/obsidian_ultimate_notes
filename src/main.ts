@@ -1,3 +1,4 @@
+import { printPdfNotes } from "./print";
 import { App, Component, FuzzySuggestModal, MarkdownRenderer, Plugin, TFile, editorInfoField, editorLivePreviewField } from "obsidian";
 import { EditorState, StateField } from "@codemirror/state";
 import { undo, redo } from "@codemirror/commands";
@@ -215,6 +216,17 @@ export default class PageboundNotes extends Plugin {
         editor.replaceSelection("\n\n<!-- pbn:v1 "+crypto.randomUUID()+" 2 -->\n\n"+wiki+"\n\n<!-- pbn:end -->\n\n");
       }).open();
     }});
+    this.addCommand({
+      id: "export-pdf-notes",
+      name: "Print or save PDF notes",
+      editorCheckCallback: (checking, editor, view) => {
+        const file = view.file;
+        const source = editor.getValue();
+        if (!file || !sections(source).length) return false;
+        if (!checking) void printPdfNotes(this.app, this, source, file.path, activeDocument);
+        return true;
+      }
+    });
     const decorations = (state:EditorState) => {
         if (!state.field(editorLivePreviewField,false)) return Decoration.none;
         const path=state.field(editorInfoField,false)?.file?.path;

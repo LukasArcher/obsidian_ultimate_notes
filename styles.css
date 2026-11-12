@@ -62,3 +62,5 @@
 .pbn-lane > .pbn-note:last-of-type,
 .pbn-body[data-columns="2"] .pbn-lane > .pbn-note:has(+ .pbn-note[hidden]) { flex: 1; }
 .pbn-note { cursor: text; }
+
+.pbn-print-frame { position: fixed; width: 1px; height: 1px; border: 0; left: -10000px; }
