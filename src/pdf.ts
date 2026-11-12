@@ -29,7 +29,9 @@ export function pdfPage(doc: Awaited<ReturnType<typeof openPdf>["promise"]>, num
   const frame = parent.createDiv("pbn-frame");
   const surface = frame.createDiv("pbn-surface");
   let scale = 1;
+  let zoomFrame = 0;
   let generation = 0;
+  let aspect = 1 / 1.414;
   let visible = false;
   let active: ReturnType<Awaited<ReturnType<typeof doc.getPage>>["render"]> | undefined;
   let textLayer: TextLayer | undefined;
@@ -48,6 +50,7 @@ export function pdfPage(doc: Awaited<ReturnType<typeof openPdf>["promise"]>, num
       const page = await (pagePromise ??= doc.getPage(number));
       if (token !== generation) return;
       const natural = page.getViewport({scale:1});
+      aspect = natural.width / natural.height;
       frame.style.setProperty("--pbn-aspect", natural.width+" / "+natural.height);
       if (!frame.clientWidth) return;
       const viewport = page.getViewport({scale:frame.clientWidth/natural.width*scale});
@@ -78,14 +81,34 @@ export function pdfPage(doc: Awaited<ReturnType<typeof openPdf>["promise"]>, num
     el.addEventListener("click",action);
     return el;
   }
-  const setZoom = (next:number) => {
-    scale = levels[Math.max(0,Math.min(next,levels.length-1))];
-    reset.textContent = Math.round(scale*100)+"%";
-    void render();
+  const setZoom = (next: number, x = 0, y = 0) => {
+    const zoom = Math.max(1, Math.min(next, 3));
+    if (zoom === scale) return;
+    const ratio = zoom / scale;
+    const left = (frame.scrollLeft + x) * ratio - x;
+    const top = (frame.scrollTop + y) * ratio - y;
+    scale = zoom;
+    reset.textContent = Math.round(scale * 100) + "%";
+    // Resize immediately to preserve the anchor across consecutive gesture events.
+    surface.style.width = frame.clientWidth * scale + "px";
+    surface.style.height = frame.clientWidth * scale / aspect + "px";
+    frame.scrollLeft = left;
+    frame.scrollTop = top;
+    cancelAnimationFrame(zoomFrame);
+    zoomFrame = requestAnimationFrame(() => void render());
   };
-  button("−","Zoom out",()=>setZoom(levels.indexOf(scale)-1));
-  const reset = button("100%","Reset zoom",()=>setZoom(0));
-  button("+","Zoom in",()=>setZoom(levels.indexOf(scale)+1));
+  frame.addEventListener("wheel", event => {
+    // Chromium delivers precision-touchpad pinch as a Ctrl+wheel event.
+    if (!event.ctrlKey) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const bounds = frame.getBoundingClientRect();
+    const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? frame.clientHeight : 1);
+    setZoom(scale * Math.exp(-delta * 0.01), event.clientX - bounds.left, event.clientY - bounds.top);
+  }, {passive:false});
+  button("−","Zoom out",()=>setZoom([...levels].reverse().find(level=>level<scale) ?? 1));
+  const reset = button("100%","Reset zoom",()=>setZoom(1));
+  button("+","Zoom in",()=>setZoom(levels.find(level=>level>scale) ?? 3));
   button("↗","Open original PDF page",open);
   let spaceHeld = false;
   let drag: {pointer: number; x: number; y: number; left: number; top: number} | undefined;
@@ -141,5 +164,5 @@ export function pdfPage(doc: Awaited<ReturnType<typeof openPdf>["promise"]>, num
     void render();
   });
   resize.observe(frame);
-  return () => {intersection.disconnect();resize.disconnect();stop();};
+  return () => {cancelAnimationFrame(zoomFrame);intersection.disconnect();resize.disconnect();stop();};
 }

@@ -14,7 +14,7 @@
 }
 .pbn-controls { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; }
 .pbn-controls span { margin-inline-end: auto; font-size: var(--font-ui-small); }
-.pbn-frame { width: 100%; aspect-ratio: var(--pbn-aspect, 1 / 1.414); overflow: auto; background: white; }
+.pbn-frame { width: 100%; aspect-ratio: var(--pbn-aspect, 1 / 1.414); overflow: auto; scrollbar-gutter: stable; background: white; }
 .pbn-surface { position: relative; }
 .pbn-surface canvas { display: block; width: 100%; height: 100%; max-width: none; }
 .pbn-note textarea { width: 100%; resize: vertical; font-family: var(--font-monospace); }
