@@ -36,15 +36,24 @@ export function pdfPage(doc: Awaited<ReturnType<typeof openPdf>["promise"]>, num
   let active: ReturnType<Awaited<ReturnType<typeof doc.getPage>>["render"]> | undefined;
   let textLayer: TextLayer | undefined;
   let pagePromise: ReturnType<typeof doc.getPage> | undefined;
+  let displayed: {element: HTMLElement; width: number} | undefined;
+  const resizeSurface = (width: number, height: number) => {
+    surface.style.width = width + "px";
+    surface.style.height = height + "px";
+    if (displayed) displayed.element.style.transform = "scale(" + width / displayed.width + ")";
+  };
   const stop = () => {
     generation++;
     active?.cancel();
     textLayer?.cancel();
-    surface.replaceChildren();
   };
   const render = async () => {
     stop();
-    if (!visible) return;
+    if (!visible) {
+      displayed = undefined;
+      surface.replaceChildren();
+      return;
+    }
     const token = generation;
     try {
       const page = await (pagePromise ??= doc.getPage(number));
@@ -56,23 +65,29 @@ export function pdfPage(doc: Awaited<ReturnType<typeof openPdf>["promise"]>, num
       const viewport = page.getViewport({scale:frame.clientWidth/natural.width*scale});
       const width = viewport.width;
       const height = viewport.height;
-      surface.style.width = width+"px";
-      surface.style.height = height+"px";
-      surface.style.setProperty("--scale-factor", String(viewport.scale));
-      surface.style.setProperty("--total-scale-factor", String(viewport.scale*page.userUnit));
-      surface.style.setProperty("--user-unit", String(page.userUnit));
-      surface.style.setProperty("--scale-round-x", "1px");
-      surface.style.setProperty("--scale-round-y", "1px");
+      resizeSurface(width, height);
+      const next = surface.ownerDocument.createElement("div");
+      next.className = "pbn-page-image";
+      next.style.width = width + "px";
+      next.style.height = height + "px";
+      next.style.setProperty("--scale-factor", String(viewport.scale));
+      next.style.setProperty("--total-scale-factor", String(viewport.scale*page.userUnit));
+      next.style.setProperty("--user-unit", String(page.userUnit));
+      next.style.setProperty("--scale-round-x", "1px");
+      next.style.setProperty("--scale-round-y", "1px");
       const pixelRatio = Math.min(window.devicePixelRatio, 4096/Math.max(width,height), Math.sqrt(8_000_000/(width*height)));
-      const canvas = surface.createEl("canvas");
+      const canvas = next.createEl("canvas");
       canvas.width = Math.max(1,Math.floor(width*pixelRatio));
       canvas.height = Math.max(1,Math.floor(height*pixelRatio));
       active = page.render({canvas,viewport,transform:[pixelRatio,0,0,pixelRatio,0,0],annotationMode:AnnotationMode.DISABLE});
-      const layer = surface.createDiv("textLayer");
+      const layer = next.createDiv("textLayer");
       textLayer = new TextLayer({container:layer,viewport,textContentSource:page.streamTextContent()});
       await Promise.all([active.promise,textLayer.render()]);
+      if (token !== generation) return;
+      displayed = {element: next, width};
+      surface.replaceChildren(next);
     } catch {
-      if (token === generation) surface.createDiv({text:"Could not render this page."});
+      if (token === generation && !displayed) surface.createDiv({text:"Could not render this page."});
     }
   };
   const levels = [1,1.25,1.5,2,3];
@@ -90,10 +105,11 @@ export function pdfPage(doc: Awaited<ReturnType<typeof openPdf>["promise"]>, num
     scale = zoom;
     reset.textContent = Math.round(scale * 100) + "%";
     // Resize immediately to preserve the anchor across consecutive gesture events.
-    surface.style.width = frame.clientWidth * scale + "px";
-    surface.style.height = frame.clientWidth * scale / aspect + "px";
+    const width = frame.clientWidth * scale;
+    resizeSurface(width, width / aspect);
     frame.scrollLeft = left;
     frame.scrollTop = top;
+    stop();
     cancelAnimationFrame(zoomFrame);
     zoomFrame = requestAnimationFrame(() => void render());
   };
