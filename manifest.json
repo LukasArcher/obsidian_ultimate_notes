@@ -1,9 +1,10 @@
 {
   "id": "pagebound-notes",
   "name": "Pagebound Notes",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "minAppVersion": "1.12.7",
   "description": "Read PDF pages alongside editable, page-linked Markdown notes.",
   "author": "LukasArcher",
-  "isDesktopOnly": true
+  "isDesktopOnly": true,
+  "fundingUrl": "https://buymeacoffee.com/JdEfRQOa53"
 }
