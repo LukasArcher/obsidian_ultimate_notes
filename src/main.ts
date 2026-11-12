@@ -1,16 +1,35 @@
 import { renderPageNotes } from "./print";
-import { App, Component, FuzzySuggestModal, MarkdownRenderer, Plugin, TFile, editorInfoField, editorLivePreviewField } from "obsidian";
+import { App, Component, FuzzySuggestModal, MarkdownRenderer, Plugin, TFile, TFolder, editorInfoField, editorLivePreviewField } from "obsidian";
 import { EditorState, StateField } from "@codemirror/state";
 import { undo, redo } from "@codemirror/commands";
 import { Decoration, EditorView, WidgetType } from "@codemirror/view";
 import { cellChange, PageNotes, sections } from "./format";
 import { openPdf, pdfPage } from "./pdf";
 
-class PdfPicker extends FuzzySuggestModal<TFile> {
-  constructor(app:App, private choose:(file:TFile)=>void) { super(app); }
-  getItems() { return this.app.vault.getFiles().filter(file=>file.extension.toLowerCase()==="pdf"); }
-  getItemText(file:TFile) { return file.path; }
-  onChooseItem(file:TFile) { this.choose(file); }
+class PdfPicker extends FuzzySuggestModal<TFile | TFolder> {
+  constructor(app: App, private folder: TFolder, private choose: (file: TFile) => void) {
+    super(app);
+    this.setPlaceholder("Choose a PDF in " + (folder.isRoot() ? "the vault root" : folder.path));
+  }
+
+  getItems() {
+    const files = this.folder.children.filter((item): item is TFile | TFolder =>
+      item instanceof TFolder || item instanceof TFile && item.extension.toLowerCase() === "pdf");
+    return this.folder.parent ? [this.folder.parent, ...files] : files;
+  }
+
+  getItemText(item: TFile | TFolder) {
+    if (item === this.folder.parent) return "../ Parent folder";
+    return item instanceof TFolder ? item.name + "/" : item.name;
+  }
+
+  onChooseItem(item: TFile | TFolder) {
+    if (item instanceof TFolder) {
+      queueMicrotask(() => new PdfPicker(this.app, item, this.choose).open());
+    } else {
+      this.choose(item);
+    }
+  }
 }
 
 class PdfWidget extends WidgetType {
@@ -20,7 +39,7 @@ class PdfWidget extends WidgetType {
     return this.path===other.path && this.section===other.section;
   }
   toDOM(view:EditorView) {
-    const root = view.dom.doc.createDocumentFragment().createDiv("pbn");
+    const root = view.dom.doc.adoptNode(createDiv("pbn"));
     PdfWidget.mounted.set(root,new PdfLayout(this.app,view,root,this.section,this.path));
     return root;
   }
@@ -213,8 +232,9 @@ export default class PageboundNotes extends Plugin {
   onload() {
     this.addCommand({id:"insert-pdf-notes",name:"Insert PDF notes",editorCallback:(editor,view)=>{
       const original=view.file;
-      new PdfPicker(this.app,file=>{
-        if (!original || view.file!==original) return;
+      if (!original) return;
+      new PdfPicker(this.app, original.parent ?? this.app.vault.getRoot(), file=>{
+        if (view.file!==original) return;
         const link=this.app.fileManager.generateMarkdownLink(file,original.path);
         const wiki=link.startsWith("[[")?link:"[["+file.path+"]]";
         editor.replaceSelection("\n\n<!-- pbn:v1 "+crypto.randomUUID()+" 2 -->\n\n"+wiki+"\n\n<!-- pbn:end -->\n\n");

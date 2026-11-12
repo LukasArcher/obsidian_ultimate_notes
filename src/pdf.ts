@@ -65,7 +65,7 @@ export function pdfPage(doc: Awaited<ReturnType<typeof openPdf>["promise"]>, num
       const width = viewport.width;
       const height = viewport.height;
       resizeSurface(width, height);
-      const next = surface.doc.createDocumentFragment().createDiv("pbn-page-image");
+      const next = surface.doc.adoptNode(createDiv("pbn-page-image"));
       next.setCssStyles({width: width + "px", height: height + "px"});
       next.setCssProps({
         "--scale-factor": String(viewport.scale),

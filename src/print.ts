@@ -30,7 +30,7 @@ async function renderPages(app: App, component: Component, source: string, path:
             const original = await doc.getPage(page);
             const natural = original.getViewport({scale: 1});
             const viewport = original.getViewport({scale: 1500 / Math.max(natural.width, natural.height)});
-            const canvas = body.doc.createDocumentFragment().createEl("canvas");
+            const canvas = body.doc.adoptNode(createEl("canvas"));
             canvas.width = Math.ceil(viewport.width);
             canvas.height = Math.ceil(viewport.height);
             await original.render({canvas, viewport}).promise;

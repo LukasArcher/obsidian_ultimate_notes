@@ -20,7 +20,7 @@ In a Markdown note in Live Preview, run **Insert PDF notes** and select a PDF fr
 
 The source uses a vault wikilink, page headings and HTML comment markers. Keep the markers intact when editing in Source Mode. Page associations use the physical PDF page number. If you reorder the PDF, move the notes to match. Reading View shows the slides alongside their notes. The Markdown notes remain readable after disabling the plugin.
 
-The PDF picker filters vault file paths locally to list PDF files. Only the selected PDF is read for display. Pagebound Notes uses no accounts, network services or telemetry.
+The PDF picker starts in the note's folder. Open a subfolder or choose **Parent folder** to browse elsewhere. The picker lists only folders and PDFs in the current folder and reads only PDFs selected for display. Pagebound Notes uses no accounts, network services or telemetry.
 
 ## Develop
 
