@@ -87,6 +87,45 @@ export function pdfPage(doc: Awaited<ReturnType<typeof openPdf>["promise"]>, num
   const reset = button("100%","Reset zoom",()=>setZoom(0));
   button("+","Zoom in",()=>setZoom(levels.indexOf(scale)+1));
   button("↗","Open original PDF page",open);
+  let spaceHeld = false;
+  let drag: {pointer: number; x: number; y: number; left: number; top: number} | undefined;
+  const stopDrag = () => {
+    const pointer = drag?.pointer;
+    drag = undefined;
+    frame.classList.remove("pbn-dragging");
+    if (pointer !== undefined && frame.hasPointerCapture(pointer)) frame.releasePointerCapture(pointer);
+  };
+  frame.addEventListener("keydown", event => {
+    if (event.code !== "Space" || scale <= 1) return;
+    event.preventDefault();
+    spaceHeld = true;
+    frame.classList.add("pbn-grab");
+  });
+  const releaseSpace = () => {
+    spaceHeld = false;
+    frame.classList.remove("pbn-grab");
+    stopDrag();
+  };
+  frame.addEventListener("keyup", event => { if (event.code === "Space") releaseSpace(); });
+  frame.addEventListener("blur", releaseSpace);
+  frame.addEventListener("pointerdown", event => {
+    if (scale <= 1 || !(event.button === 1 || event.button === 0 && spaceHeld)) return;
+    event.preventDefault();
+    frame.focus({preventScroll:true});
+    frame.setPointerCapture(event.pointerId);
+    drag = {pointer:event.pointerId,x:event.clientX,y:event.clientY,left:frame.scrollLeft,top:frame.scrollTop};
+    frame.classList.add("pbn-dragging");
+  });
+  frame.addEventListener("pointermove", event => {
+    if (!drag || event.pointerId !== drag.pointer) return;
+    frame.scrollLeft = drag.left + drag.x - event.clientX;
+    frame.scrollTop = drag.top + drag.y - event.clientY;
+  });
+  const endPointer = (event: PointerEvent) => { if (event.pointerId === drag?.pointer) stopDrag(); };
+  frame.addEventListener("pointerup", endPointer);
+  frame.addEventListener("pointercancel", endPointer);
+  frame.addEventListener("lostpointercapture", endPointer);
+  controls.createSpan({cls:"pbn-pan-hint",text:"Focus page, then Space + drag to pan"});
   frame.tabIndex = 0;
   frame.setAttribute("aria-label","PDF page "+number+" scroll area");
   const intersection = new IntersectionObserver(([entry]) => {

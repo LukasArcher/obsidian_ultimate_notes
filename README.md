@@ -12,7 +12,7 @@ Target: desktop Obsidian 1.12.7 or later. Use a separate vault to try a developm
 
 ## Use
 
-In a Markdown note in Live Preview, run **Insert PDF notes** and select a PDF from the vault. Switch between two and three columns with the button above the PDF. Click a note or its Edit button to write Markdown. Changes use the note's undo history. Each page has its own zoom controls and a button to open the original PDF. Scroll within a zoomed page to pan. Existing PDF text can be selected and copied. Scanned PDFs are displayed without OCR.
+In a Markdown note in Live Preview, run **Insert PDF notes** and select a PDF from the vault. Switch between two and three columns with the button above the PDF. Click a note or its Edit button to write Markdown. Changes use the note's undo history. Each page has its own zoom controls and a button to open the original PDF. To pan a zoomed page, scroll within it, drag with the middle mouse button, or focus the page and hold Space while dragging. Existing PDF text can be selected and copied. Scanned PDFs are displayed without OCR.
 
 The source uses a vault wikilink, page headings and HTML comment markers. Keep the markers intact when editing in Source Mode. Page associations use the physical PDF page number. If you reorder the PDF, move the notes to match. The Markdown notes remain readable in Reading View and after disabling the plugin.
 

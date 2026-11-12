@@ -51,3 +51,7 @@
 }
 .pbn .textLayer .markedContent { display: contents; }
 .pbn .textLayer ::selection { background: rgb(36 116 223 / 35%); }
+
+.pbn .pbn-grab, .pbn .pbn-grab .textLayer :is(span, br) { cursor: grab; }
+.pbn .pbn-dragging, .pbn .pbn-dragging .textLayer :is(span, br) { cursor: grabbing; }
+.pbn .pbn-pan-hint { font-size: var(--font-ui-smaller); margin-inline: 4px; }
