@@ -114,13 +114,23 @@ export function pdfPage(doc: Awaited<ReturnType<typeof openPdf>["promise"]>, num
     zoomFrame = requestAnimationFrame(() => void render());
   };
   frame.addEventListener("wheel", event => {
+    const lineSize = 16;
+    const deltaX = event.deltaX * (event.deltaMode === 1 ? lineSize : event.deltaMode === 2 ? frame.clientWidth : 1);
+    const deltaY = event.deltaY * (event.deltaMode === 1 ? lineSize : event.deltaMode === 2 ? frame.clientHeight : 1);
     // Chromium delivers precision-touchpad pinch as a Ctrl+wheel event.
-    if (!event.ctrlKey) return;
+    if (event.ctrlKey) {
+      event.preventDefault();
+      event.stopPropagation();
+      const bounds = frame.getBoundingClientRect();
+      setZoom(scale * Math.exp(-deltaY * 0.01), event.clientX - bounds.left, event.clientY - bounds.top);
+      return;
+    }
+    if (scale <= 1) return;
+    // Apply both axes ourselves so Chromium's native scroll rail does not choose one.
     event.preventDefault();
     event.stopPropagation();
-    const bounds = frame.getBoundingClientRect();
-    const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? frame.clientHeight : 1);
-    setZoom(scale * Math.exp(-delta * 0.01), event.clientX - bounds.left, event.clientY - bounds.top);
+    frame.scrollLeft += deltaX;
+    frame.scrollTop += deltaY;
   }, {passive:false});
   button("−","Zoom out",()=>setZoom([...levels].reverse().find(level=>level<scale) ?? 1));
   const reset = button("100%","Reset zoom",()=>setZoom(1));
