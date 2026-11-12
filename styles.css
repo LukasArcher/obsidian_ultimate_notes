@@ -63,4 +63,15 @@
 .pbn-body[data-columns="2"] .pbn-lane > .pbn-note:has(+ .pbn-note[hidden]) { flex: 1; }
 .pbn-note { cursor: text; }
 
-.pbn-print-frame { position: fixed; width: 1px; height: 1px; border: 0; left: -10000px; }
+
+.pbn-reading-fallback { display: none; }
+.pbn-document .page { margin-block: 1rem; }
+.pbn-document .row { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); align-items: start; }
+.pbn-document .row.three { grid-template-columns: minmax(0, 1.3fr) repeat(2, minmax(0, 1fr)); }
+.pbn-document img { max-width: 100%; height: auto; }
+.pbn-document .notes { overflow-wrap: anywhere; }
+.pbn-document .notes > :first-child { margin-top: 0; }
+@media print {
+  .pbn-document .page { break-inside: avoid; }
+  .pbn-document img { max-height: 165mm; object-fit: contain; }
+}

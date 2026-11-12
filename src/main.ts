@@ -1,4 +1,4 @@
-import { printPdfNotes } from "./print";
+import { renderPageNotes } from "./print";
 import { App, Component, FuzzySuggestModal, MarkdownRenderer, Plugin, TFile, editorInfoField, editorLivePreviewField } from "obsidian";
 import { EditorState, StateField } from "@codemirror/state";
 import { undo, redo } from "@codemirror/commands";
@@ -125,7 +125,7 @@ class PdfLayout extends Component {
     const cell=parent.createDiv("pbn-note");
     const input=cell.createEl("textarea",{attr:{"aria-label":"Page "+page+", notes "+lane,rows:"3"}});
     const preview=cell.createDiv("pbn-note-preview");
-    const edit=cell.createEl("button",{text:"Edit notes "+lane,attr:{type:"button"}});
+    const edit=cell.createEl("button",{text:"Edit notes "+page,attr:{type:"button","aria-label":"Edit notes "+page+", column "+lane}});
     let editing=false;
     let composing=false;
     let displayed: string | undefined;
@@ -216,17 +216,7 @@ export default class PageboundNotes extends Plugin {
         editor.replaceSelection("\n\n<!-- pbn:v1 "+crypto.randomUUID()+" 2 -->\n\n"+wiki+"\n\n<!-- pbn:end -->\n\n");
       }).open();
     }});
-    this.addCommand({
-      id: "export-pdf-notes",
-      name: "Print or save PDF notes",
-      editorCheckCallback: (checking, editor, view) => {
-        const file = view.file;
-        const source = editor.getValue();
-        if (!file || !sections(source).length) return false;
-        if (!checking) void printPdfNotes(this.app, this, source, file.path, activeDocument);
-        return true;
-      }
-    });
+    this.registerMarkdownPostProcessor((element, context) => renderPageNotes(this.app, element, context));
     const decorations = (state:EditorState) => {
         if (!state.field(editorLivePreviewField,false)) return Decoration.none;
         const path=state.field(editorInfoField,false)?.file?.path;
