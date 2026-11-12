@@ -162,8 +162,10 @@ class PdfLayout extends Component {
       input.focus();
     };
     edit.addEventListener("click",begin);
-    preview.addEventListener("click",event=>{
-      if (!(event.target as Element).closest("a") && !input.ownerDocument.getSelection()?.toString()) begin();
+    cell.addEventListener("click",event=>{
+      const target = event.target;
+      if (!(target instanceof Element) || target.closest("a, button, input, textarea, select, summary")) return;
+      if (!input.ownerDocument.getSelection()?.toString()) begin();
     });
     const commit=()=>{
       const current=this.current();

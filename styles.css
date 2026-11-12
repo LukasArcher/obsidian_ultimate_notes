@@ -57,3 +57,8 @@
 .pbn .pbn-pan-hint { font-size: var(--font-ui-smaller); margin-inline: 4px; }
 
 .pbn-page-image { position: absolute; inset: 0 auto auto 0; transform-origin: top left; }
+
+.pbn-lane { align-self: stretch; display: flex; flex-direction: column; }
+.pbn-lane > .pbn-note:last-of-type,
+.pbn-body[data-columns="2"] .pbn-lane > .pbn-note:has(+ .pbn-note[hidden]) { flex: 1; }
+.pbn-note { cursor: text; }
