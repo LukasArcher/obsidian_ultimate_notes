@@ -2,6 +2,10 @@
 
 Read a PDF alongside page-linked Markdown notes in Obsidian Live Preview.
 
+![PDF slide with editable notes in Obsidian Live Preview](assets/live-preview.png)
+
+[Reading View](assets/reading-view.png) · [Three-column layout](assets/three-columns.png)
+
 ## Install from GitHub
 
 1. Download `main.js`, `manifest.json`, and `styles.css` from the release.
