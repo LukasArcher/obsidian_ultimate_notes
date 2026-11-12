@@ -1,7 +1,7 @@
 import { getDocument, PDFWorker, TextLayer, AnnotationMode } from "pdfjs-dist/legacy/build/pdf.mjs";
 import type { App, TFile } from "obsidian";
 
-export function openPdf(app: App, file: TFile) {
+export function openPdf(app: App, file: TFile, ownerDocument: Document) {
   const url = URL.createObjectURL(new Blob([PAGEBOUND_WORKER], {type:"text/javascript"}));
   let port: Worker;
   try { port = new Worker(url, {type:"module"}); }
@@ -11,7 +11,7 @@ export function openPdf(app: App, file: TFile) {
   let task: ReturnType<typeof getDocument> | undefined;
   const promise = app.vault.readBinary(file).then(bytes => {
     if (closed) throw new Error("PDF view closed");
-    task = getDocument({data:new Uint8Array(bytes),worker,enableXfa:false,useWasm:false});
+    task = getDocument({data:new Uint8Array(bytes),worker,ownerDocument,enableXfa:false,useWasm:false});
     return task.promise;
   });
   return {promise, close() {

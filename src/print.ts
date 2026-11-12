@@ -22,7 +22,7 @@ async function renderPages(app: App, component: Component, source: string, path:
     let count = 0;
     let pdf: ReturnType<typeof openPdf> | undefined;
     try {
-      if (file?.extension.toLowerCase() === "pdf") pdf = openPdf(app, file);
+      if (file?.extension.toLowerCase() === "pdf") pdf = openPdf(app, file, body.ownerDocument);
       const doc = await pdf?.promise;
       if (doc) {
         for (let page = 1; page <= doc.numPages; page++) {

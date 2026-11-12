@@ -90,7 +90,7 @@ class PdfLayout extends Component {
     let count=0;
     try {
       if (!file) throw new Error("PDF not found");
-      const pdf=openPdf(this.app,file);
+      const pdf=openPdf(this.app,file,this.root.ownerDocument);
       this.disposePdf.push(pdf.close);
       const doc=await pdf.promise;
       if (this.revision!==revision) return;
