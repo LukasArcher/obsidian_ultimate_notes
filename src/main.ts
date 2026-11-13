@@ -192,6 +192,8 @@ class PdfLayout extends Component {
       preview.hidden=true;
       refresh();
       input.focus();
+      const end = input.value.length;
+      input.setSelectionRange(end,end);
     };
     edit.addEventListener("click",begin);
     cell.addEventListener("click",event=>{
