@@ -2,7 +2,7 @@ import { renderPageNotes } from "./print";
 import { App, Component, FuzzySuggestModal, MarkdownRenderer, Plugin, TFile, TFolder, editorInfoField, editorLivePreviewField } from "obsidian";
 import { EditorState, StateField } from "@codemirror/state";
 import { undo, redo } from "@codemirror/commands";
-import { Decoration, EditorView, WidgetType } from "@codemirror/view";
+import { Decoration, DecorationSet, EditorView, WidgetType } from "@codemirror/view";
 import { cellChange, PageNotes, sections } from "./format";
 import { openPdf, pdfPage } from "./pdf";
 
@@ -34,13 +34,25 @@ class PdfPicker extends FuzzySuggestModal<TFile | TFolder> {
 
 class PdfWidget extends WidgetType {
   private static mounted = new WeakMap<HTMLElement, PdfLayout>();
-  constructor(private app:App, private section:PageNotes, private path:string) { super(); }
+  constructor(private app:App, private section:PageNotes, private path:string, private size = {height:-1}) { super(); }
+  get id() { return this.section.id; }
+  get estimatedHeight() { return this.size.height; }
+  withSection(section:PageNotes,path:string) {
+    return new PdfWidget(this.app,section,path,path===this.path ? this.size : undefined);
+  }
   eq(other:PdfWidget) {
     return this.path===other.path && this.section===other.section;
   }
   toDOM(view:EditorView) {
     const root = view.dom.doc.adoptNode(createDiv("pbn"));
-    PdfWidget.mounted.set(root,new PdfLayout(this.app,view,root,this.section,this.path));
+    const layout = new PdfLayout(this.app,view,root,this.section,this.path);
+    // CodeMirror needs the measured height while rebuilding its height map after edits.
+    const observer = new ResizeObserver(() => {
+      if (root.offsetHeight > 0) this.size.height = root.offsetHeight;
+    });
+    observer.observe(root);
+    layout.register(() => observer.disconnect());
+    PdfWidget.mounted.set(root,layout);
     return root;
   }
   updateDOM(root:HTMLElement) {
@@ -241,12 +253,19 @@ export default class PageboundNotes extends Plugin {
       }).open();
     }});
     this.registerMarkdownPostProcessor((element, context) => renderPageNotes(this.app, element, context));
-    const decorations = (state:EditorState) => {
-        if (!state.field(editorLivePreviewField,false)) return Decoration.none;
-        const path=state.field(editorInfoField,false)?.file?.path;
-        if (!path) return Decoration.none;
-        return Decoration.set(sections(state.doc.toString()).map(section=>
-          Decoration.replace({widget:new PdfWidget(this.app,section,path),block:true}).range(section.from,section.to)),true);
+    const decorations = (state:EditorState, previous:DecorationSet = Decoration.none) => {
+      if (!state.field(editorLivePreviewField,false)) return Decoration.none;
+      const path=state.field(editorInfoField,false)?.file?.path;
+      if (!path) return Decoration.none;
+      const widgets = new Map<string,PdfWidget>();
+      for (let cursor=previous.iter(); cursor.value; cursor.next()) {
+        const widget=cursor.value.spec.widget;
+        if (widget instanceof PdfWidget) widgets.set(widget.id,widget);
+      }
+      return Decoration.set(sections(state.doc.toString()).map(section=>{
+        const widget=widgets.get(section.id)?.withSection(section,path) ?? new PdfWidget(this.app,section,path);
+        return Decoration.replace({widget,block:true}).range(section.from,section.to);
+      }),true);
     };
     const field=StateField.define({
       create:decorations,
@@ -254,7 +273,7 @@ export default class PageboundNotes extends Plugin {
         if (!transaction.docChanged &&
             transaction.startState.field(editorLivePreviewField,false)===transaction.state.field(editorLivePreviewField,false) &&
             transaction.startState.field(editorInfoField,false)?.file===transaction.state.field(editorInfoField,false)?.file) return value;
-        return decorations(transaction.state);
+        return decorations(transaction.state,value);
       },
       provide:field=>EditorView.decorations.from(field)
     });
