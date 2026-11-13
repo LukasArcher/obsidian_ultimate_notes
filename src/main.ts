@@ -261,7 +261,9 @@ export default class PageboundNotes extends Plugin {
       if (!path) return Decoration.none;
       const widgets = new Map<string,PdfWidget>();
       for (let cursor=previous.iter(); cursor.value; cursor.next()) {
-        const widget=cursor.value.spec.widget;
+        const spec: unknown = cursor.value.spec;
+        if (typeof spec !== "object" || spec === null || !("widget" in spec)) continue;
+        const widget = spec.widget;
         if (widget instanceof PdfWidget) widgets.set(widget.id,widget);
       }
       return Decoration.set(sections(state.doc.toString()).map(section=>{
